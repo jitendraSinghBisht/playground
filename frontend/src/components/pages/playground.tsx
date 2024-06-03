@@ -1,12 +1,13 @@
 import {
   Binary,
   LogOut,
-  Play,
+  Play, 
   SaveAll,
   FilesIcon,
   TerminalSquare,
   Braces,
   Globe,
+  SunSnow,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,10 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "../ui/resizable";
+import Xterm from "../xterm/xterm";
+import Monaco from "../monaco/monaco";
+import Preview from "../preview/preview";
+import FolderView from "../folderview/folderview";
 
 export function Playground() {
   const dispatch = useDispatch();
@@ -33,22 +38,22 @@ export function Playground() {
   const folder = useSelector(folderData);
   const user = useSelector(userData);
 
-  async function logout() {
-    try {
-      const response = await axios.post(`/user/log-out`, {
-        userId: user.userId,
-      });
-      const jres: IApiResponse | IApiError = await response.data;
-      if (!jres.success) {
-        alert("Unable to logout... \nTry again later....");
-        return;
-      }
-      dispatch({ type: "RESET" });
-      navigate("/login");
-    } catch (error) {
-      console.log(error);
-    }
-  }
+  // async function logout() {
+  //   try {
+  //     const response = await axios.post(`/user/log-out`, {
+  //       userId: user.userId,
+  //     });
+  //     const jres: IApiResponse | IApiError = await response.data;
+  //     if (!jres.success) {
+  //       alert("Unable to logout... \nTry again later....");
+  //       return;
+  //     }
+  //     dispatch({ type: "RESET" });
+  //     navigate("/login");
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // }
 
   // useEffect(() => {
   //   if (!user.loggedIn) {
@@ -77,7 +82,7 @@ export function Playground() {
         </Button>
       </header>
       <div className="h-[93vh] flex">
-        <div className="h-full gap-5 border-r-2 border-gray-700 w-[3vw] flex flex-col">
+        <div className="h-full gap-5 border-r-2 border-gray-700 w-[4vw] flex flex-col">
           <div
             className={`h-fit p-2 w-full flex items-center justify-center ${
               fileActive ? "border-l-4" : ""
@@ -111,34 +116,75 @@ export function Playground() {
             <Globe size="35" />
           </div>
         </div>
-        <div className="h-full w-[97vw]">
-          <ResizablePanelGroup direction="horizontal">
-            {fileActive && (
-              <>
-                <ResizablePanel defaultSize={18}></ResizablePanel>
-                <ResizableHandle className="border-2 border-gray-700 " />
-              </>
-            )}
-            <ResizablePanel>
-              <ResizablePanelGroup direction="vertical">
-                {editorActive && (
-                  <ResizablePanel defaultSize={70}></ResizablePanel>
-                )}
-                {termActive && (
-                  <>
-                    <ResizableHandle className="border-2 border-gray-700 " />
-                    <ResizablePanel></ResizablePanel>
-                  </>
-                )}
-              </ResizablePanelGroup>
-            </ResizablePanel>
-            {webActive && (
-              <>
-                <ResizableHandle className="border-2 border-gray-700 " />
-                <ResizablePanel></ResizablePanel>
-              </>
-            )}
-          </ResizablePanelGroup>
+        <div className="h-full w-[96vw]">
+          {fileActive || editorActive || termActive || webActive ? (
+            <ResizablePanelGroup direction="horizontal">
+              <ResizablePanel
+                defaultSize={15}
+                maxSize={50}
+                minSize={10}
+                className={`${!fileActive && "w-0 hidden"}`}
+              >
+                <FolderView />
+              </ResizablePanel>
+              <ResizableHandle
+                className={`border-2 border-gray-700 ${
+                  !fileActive && "hidden"
+                }`}
+              />
+              <ResizablePanel
+                className={`${
+                  !(termActive || editorActive || webActive) && "w-0 hidden"
+                }`}
+              >
+                <ResizablePanelGroup direction="horizontal">
+                  <ResizablePanel
+                    minSize={20}
+                    className={`${
+                      !(termActive || editorActive) && "w-0 hidden"
+                    }`}
+                  >
+                    <ResizablePanelGroup direction="vertical">
+                      <ResizablePanel
+                        defaultSize={70}
+                        minSize={20}
+                        className={`${!editorActive && "w-0 hidden"}`}
+                      >
+                        <Monaco click={()=>{setEditorActive(prev=>!prev)}}/>
+                      </ResizablePanel>
+                      <ResizableHandle
+                        className={`border-2 border-gray-700 ${
+                          !(termActive && editorActive) && "hidden"
+                        }`}
+                      />
+                      <ResizablePanel
+                        minSize={15}
+                        className={`${!termActive && "w-0 hidden"}`}
+                      >
+                        <Xterm click={()=>{setTermActive(prev=>!prev)}}/>
+                      </ResizablePanel>
+                    </ResizablePanelGroup>
+                  </ResizablePanel>
+                  <ResizableHandle
+                    className={`border-2 border-gray-700 ${
+                      !((termActive || editorActive) && webActive) && "hidden"
+                    }`}
+                  />
+                  <ResizablePanel
+                    defaultSize={30}
+                    minSize={20}
+                    className={`${!webActive && "hidden"}`}
+                  >
+                    <Preview click={()=>{setWebActive(prev=>!prev)}}/>
+                  </ResizablePanel>
+                </ResizablePanelGroup>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          ) : (
+            <div className="h-full opacity-20 flex items-center justify-center">
+              <SunSnow size={500} strokeWidth={1.5} />
+            </div>
+          )}
         </div>
       </div>
     </div>
