@@ -1,4 +1,4 @@
-interface UserDocument{
+interface IUserDocument{
   _id: mongooes.Schema.Types.ObjectId,
   username: string,
   email: string,
@@ -6,7 +6,7 @@ interface UserDocument{
   session: string
 }
 
-interface VolumeDocument {
+interface IVolumeDocument {
   owner: mongoose.Schema.Types.ObjectId,
   volumeName: string,
   volumeImage: string,
@@ -14,4 +14,10 @@ interface VolumeDocument {
   volumeStructure: string,
 }
 
-export type { UserDocument, VolumeDocument }
+interface IReqBody {
+  username?: string;
+  email: string;
+  password: string;
+}
+
+export type { IUserDocument, IVolumeDocument, IReqBody }

@@ -1,5 +1,5 @@
 import mongooes from "mongoose";
-import { UserDocument } from "../types.js";
+import { IUserDocument } from "../types.js";
 
 const userSchema = new mongooes.Schema(
   {
@@ -23,4 +23,4 @@ const userSchema = new mongooes.Schema(
   { timestamps: true }
 )
 
-export const User = mongooes.model<UserDocument>("User", userSchema);
+export const User = mongooes.model<IUserDocument>("User", userSchema);

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { VolumeDocument } from "../types.js";
+import { IVolumeDocument } from "../types.js";
 
 const volumeSchema = new mongoose.Schema(
   {
@@ -27,4 +27,4 @@ const volumeSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-export const Volume = mongoose.model<VolumeDocument>("Volume",volumeSchema)
+export const Volume = mongoose.model<IVolumeDocument>("Volume",volumeSchema)
