@@ -7,6 +7,8 @@ import { useSelector } from "react-redux";
 import { containerData } from "@/store/slice/container.slice";
 import { RefreshCw, X } from "lucide-react";
 
+const term = new Terminal({ convertEol: true });
+
 function Xterm(props: {click: ()=>void}) {
 
   const container = useSelector(containerData)
@@ -14,8 +16,7 @@ function Xterm(props: {click: ()=>void}) {
   const termRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const term = new Terminal({ convertEol: true });
-    term.open(termRef.current!); // Accessing the current value of termRef
+    term.open(termRef.current!);
 
     // const socket = new WebSocket(`${container.wsurl}/container/${container.containerId}`)
     // const attachAddon = new AttachAddon(socket)

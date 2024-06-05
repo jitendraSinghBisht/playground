@@ -178,7 +178,7 @@ export function Home() {
         <span className="text-base">Logout</span>
       </Button>
       <div className="flex justify-center items-center h-full w-full flex-col gap-3">
-        <Card className="w-[350px] bg-gray-600">
+        <Card className="w-[350px] text-white bg-gray-800">
           <CardHeader>
             <CardTitle>Enter existing project</CardTitle>
             <CardDescription>
@@ -200,13 +200,13 @@ export function Home() {
             </CardContent>
           )}
           <CardFooter className="flex justify-between">
-            <Button variant="outline" onClick={getProject}>
+            <Button variant="ghost" className="border" onClick={getProject}>
               {old ? "Create new project" : "Get previous projects"}
             </Button>
           </CardFooter>
         </Card>
         {!old && (
-          <Card className="w-[350px] bg-gray-600">
+          <Card className="w-[350px] text-white bg-gray-800">
             <CardHeader>
               <CardTitle>Create project</CardTitle>
               <CardDescription>
@@ -249,7 +249,7 @@ export function Home() {
               </form>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button variant="outline" onClick={deploy}>
+              <Button variant="ghost" className="border" onClick={deploy}>
                 Deploy
               </Button>
             </CardFooter>

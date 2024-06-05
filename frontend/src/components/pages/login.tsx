@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { loginUser } from "@/store/slice/user.slice";
 import type { IApiError, IApiResponse, IUser } from "@/types";
@@ -33,11 +33,7 @@ export function Login() {
     }));
   }
 
-  useEffect(() => {
-    authenticate();
-  });
-
-  async function authenticate() {
+  (async () => {
     try {
       const response = await axios.get(`/user/authenticate`);
       const jres: IApiResponse | IApiError = await response.data;
@@ -55,7 +51,7 @@ export function Login() {
     } catch (error) {
       console.log(error);
     }
-  }
+  })();
 
   async function login() {
     if (!user.email || !user.password) {
@@ -119,23 +115,23 @@ export function Login() {
 
   return (
     <div className="flex justify-center items-center h-full w-full">
-      <Tabs defaultValue="login" className="w-[400px] bg-gray-900">
-        <TabsList className="grid w-full grid-cols-2 bg-gray-600">
+      <Tabs defaultValue="login" className="w-[400px]">
+        <TabsList className="grid w-full grid-cols-2 bg-gray-600 text-white">
           <TabsTrigger
             value="login"
-            className="data-[state=active]:bg-gray-800"
+            className="data-[state=active]:bg-gray-800 data-[state=active]:text-white"
           >
             Login
           </TabsTrigger>
           <TabsTrigger
             value="signup"
-            className="data-[state=active]:bg-gray-800"
+            className="data-[state=active]:bg-gray-800 data-[state=active]:text-white"
           >
             Signup
           </TabsTrigger>
         </TabsList>
         <TabsContent value="login">
-          <Card>
+          <Card className="bg-gray-900 text-white">
             <CardHeader>
               <CardTitle>Login Account</CardTitle>
               <CardDescription>
@@ -169,14 +165,14 @@ export function Login() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button variant="outline" onClick={login}>
+              <Button variant="ghost" className="border" onClick={login}>
                 Login
               </Button>
             </CardFooter>
           </Card>
         </TabsContent>
         <TabsContent value="signup">
-          <Card>
+          <Card className="bg-gray-900 text-white">
             <CardHeader>
               <CardTitle>Create Account</CardTitle>
               <CardDescription>
@@ -223,7 +219,7 @@ export function Login() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button variant="outline" onClick={signup}>
+              <Button variant="ghost" className="border" onClick={signup}>
                 Signup
               </Button>
             </CardFooter>
