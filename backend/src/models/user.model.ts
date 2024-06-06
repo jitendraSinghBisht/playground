@@ -5,12 +5,17 @@ const userSchema = new mongooes.Schema(
   {
     username: {
       type: String,
-      require: true
+      require: true,
+      unique: true,
+      lowercase: true,
+      trim: true
     },
     email: {
       type: String,
       require: true,
-      unique: true
+      unique: true,
+      lowercase: true,
+      trim: true
     },
     password: {
       type: String,

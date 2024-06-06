@@ -1,4 +1,5 @@
 import express from "express";
+import { WebSocketServer } from "ws";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
@@ -24,4 +25,8 @@ import userRoute from "./routes/user.routes.js";
 app.use("/api",healthRoute);
 app.use("/api/user", userRoute);
 
-export { app };
+//webSocket
+const wssT = new WebSocketServer({noServer: true})
+const wssF = new WebSocketServer({noServer: true})
+
+export { app, wssF, wssT };

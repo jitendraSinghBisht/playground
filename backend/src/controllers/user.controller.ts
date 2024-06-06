@@ -13,14 +13,16 @@ const signUp = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(400, "All details are required")
   }
 
-  const existedUser = await User.findOne({ email });
+  const existedUser = await User.findOne({
+    $or: [{ username }, { email }],
+  });
 
   if (existedUser) {
     throw new ApiError(400, "User with username or email already exist");
   }
 
   const user = await User.create({
-    username,
+    username: username?.toLowerCase(),
     email,
     password
   })

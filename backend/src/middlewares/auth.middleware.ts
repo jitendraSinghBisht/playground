@@ -12,7 +12,7 @@ export const verifyUser = asyncHandler(async (req: Request, res: Response, next:
     }
 
     const user = await User.find({session: token}).select(
-      "-password"
+      "-password -session"
     );
 
     if (!user) {
