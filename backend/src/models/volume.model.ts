@@ -12,10 +12,6 @@ const volumeSchema = new mongoose.Schema(
       type: String,
       require: true
     },
-    volumeImage: {
-      type: String,
-      require: true
-    },
     volumeLang: {
       type: String,
       require: true

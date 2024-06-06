@@ -20,10 +20,14 @@ app.use(cookieParser());
 //routes import
 import healthRoute from "./routes/healthcheck.routes.js";
 import userRoute from "./routes/user.routes.js";
+import volumeRoute from "./routes/volume.routes.js";
+import containerRoute from "./routes/container.routes.js";
 
 //routes
 app.use("/api",healthRoute);
 app.use("/api/user", userRoute);
+app.use("/api/volume", volumeRoute);
+app.use("/api/container", containerRoute);
 
 //webSocket
 const wssT = new WebSocketServer({noServer: true})

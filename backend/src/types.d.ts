@@ -1,17 +1,16 @@
 interface IUserDocument{
-  _id: mongooes.Schema.Types.ObjectId,
-  username: string,
-  email: string,
-  password: string,
-  session: string
+  _id: mongooes.Schema.Types.ObjectId;
+  username: string;
+  email: string;
+  password: string;
+  session: string;
 }
 
 interface IVolumeDocument {
-  owner: mongoose.Schema.Types.ObjectId,
-  volumeName: string,
-  volumeImage: string,
-  volumeLang: string,
-  volumeStructure: string,
+  owner: mongoose.Schema.Types.ObjectId;
+  volumeName: string;
+  volumeLang: string;
+  volumeStructure: string;
 }
 
 interface IReqBody {
@@ -20,4 +19,6 @@ interface IReqBody {
   password: string;
 }
 
-export type { IUserDocument, IVolumeDocument, IReqBody }
+type workDir = "node" | "java" | "python" | "ccpp";
+
+export type { IUserDocument, IVolumeDocument, IReqBody, workDir }
