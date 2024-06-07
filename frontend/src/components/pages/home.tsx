@@ -20,17 +20,16 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { userData } from "@/store/slice/user.slice";
 import { useEffect, useState } from "react";
-import type { IApiError, IApiResponse, IOldVolumes } from "@/types";
-import { setContainer } from "@/store/slice/container.slice";
-import { updateFolder } from "@/store/slice/folder.slice";
+import type { IApiError, IApiResponse, IVolume } from "@/types";
 import axios from "axios";
 import { LogOutIcon } from "lucide-react";
+import { setVolume } from "@/store/slice/volume.slice";
 
 export function Home() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [old, setOld] = useState(false);
-  const [oldVolumes, setOldVolumes] = useState<Array<IOldVolumes>>([]);
+  const [oldVolumes, setOldVolumes] = useState<Array<IVolume>>([]);
   const [values, setValues] = useState({
     name: "",
     lang: "",
@@ -48,85 +47,46 @@ export function Home() {
     !user.loggedIn && navigate("/login");
   }, [user]);
 
-  async function getFiles(volumeName: string) {
-    try {
-      const response = await axios.get(
-        `/container/get-root-structure/${volumeName}`
-      );
-      const jres: IApiResponse | IApiError = await response.data;
-      if (!jres.success) {
-        alert("Unable to get files... \nTry again later....");
-        return;
-      }
-      dispatch(
-        updateFolder({
-          ...jres.data,
-        })
-      );
-      navigate("/playground");
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
   async function deploy() {
     if (!values.lang || !values.name) {
       alert("Name and Framework are required..");
       return;
     }
 
-    const images = { language: "ubuntu" };
-
     try {
-      const response = await axios.post(`/container/create`, {
+      const response = await axios.post(`/volume/create`, {
         name: values.name,
-        lang: values.lang,
-        imageName: images.language,
+        lang: values.lang
       });
       const jres: IApiResponse | IApiError = await response.data;
       if (!jres.success) {
         alert("Unable to deploy... \nTry again later....");
         return;
       }
-      dispatch(
-        setContainer({
-          wsurl: jres.data.wsurl,
-          containerId: jres.data.containerId,
-          containerName: jres.data.containerName,
-        })
-      );
-      getFiles(jres.data.containerName);
+      dispatch(setVolume(jres.data));
+      navigate("/playground");
     } catch (error) {
       alert("Unable to deploy... \nTry again later....");
       console.log(error);
     }
   }
 
-  async function oldDeploy(vols: IOldVolumes) {
+  async function oldDeploy(vols: IVolume) {
     try {
-      const response = await axios.post(`/container/create`, {
+      const response = await axios.post(`/volume/create`, {
         name: vols.volumeName,
-        lang: vols.volumeLang,
-        imageName: vols.volumeImage,
+        lang: vols.volumeLang
       });
       const jres: IApiResponse | IApiError = await response.data;
       if (!jres.success) {
         alert("Unable to deploy... \nTry again later....");
         return;
       }
-      dispatch(
-        setContainer({
-          wsurl: jres.data.wsurl,
-          containerId: jres.data.containerId,
-          containerName: jres.data.containerName,
-        })
-      );
-      getFiles(jres.data.containerName);
+      dispatch(setVolume(jres.data));
+      navigate("/playground");
     } catch (error: any) {
       console.log(error);
-      if (error.response.status == 409)
-        alert("Select another name this container is already running");
-      else alert("Unable to deploy... \nTry again later....");
+      alert("Unable to deploy... \nTry again later....");
     }
   }
 
@@ -134,7 +94,7 @@ export function Home() {
     setOld((prevState) => !prevState);
     if (!old && !oldVolumes.length) {
       try {
-        const response = await axios.get(`/container/get-old-volumes`);
+        const response = await axios.get(`/volume/get-old-volumes`);
         const jres: IApiResponse | IApiError = await response.data;
         if (!jres.success) {
           alert("No previous projects found");

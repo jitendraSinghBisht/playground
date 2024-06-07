@@ -35,7 +35,6 @@ export function Playground() {
   const [editorActive, setEditorActive] = useState(true);
   const [termActive, setTermActive] = useState(true);
   const [webActive, setWebActive] = useState(false);
-  const folder = useSelector(folderData);
   const user = useSelector(userData);
 
   // async function logout() {

@@ -7,7 +7,7 @@ import { useState } from "react";
 import { IFolder, IFile } from "@/types";
 import { Button } from "@/components/ui/button";
 
-function Folders({ folder }: { folder: IFolder }) {
+function Folders({ folder, activeFile }: { folder: IFolder, activeFile: string|undefined }) {
   const [expand, setExpand] = useState(true);
 
   return (
@@ -56,13 +56,13 @@ function Folders({ folder }: { folder: IFolder }) {
 
       <div style={{ display: expand ? "block" : "none", paddingLeft: "10px" }}>
         {folder.childFolder.map((child: IFolder) => (
-          <Folders folder={child} key={child.id} />
+          <Folders folder={child} key={child.id} activeFile={activeFile} />
         ))}
         {folder.childFiles.map((child: IFile) => (
           <ContextMenu>
             <ContextMenuTrigger>
               <div
-                className="ml-3 cursor-pointer max-w-fit flex items-center"
+                className={`ml-3 cursor-pointer max-w-fit flex items-center ${child.id == activeFile ? "bg-slate-700" : ""} hover:bg-slate-700`}
                 onClick={() => {
                   // changeFile(child.id);
                 }}

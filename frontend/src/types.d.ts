@@ -1,15 +1,15 @@
-interface IApiResponse{
-  statusCode: number,
-  data: any,
-  message: string,
-  success: boolean
+interface IApiResponse {
+  statusCode: number;
+  data: any;
+  message: string;
+  success: boolean;
 }
 
 interface IApiError {
-  statusCode: number,
-  message: string,
-  success: false,
-  errors: Array<Error>
+  statusCode: number;
+  message: string;
+  success: false;
+  errors: Array<Error>;
 }
 
 interface IFile {
@@ -30,17 +30,10 @@ interface IUser {
   password: string;
 }
 
-interface IOldVolumes{
-  _id: string,
-  volumeName: string,
-  volumeImage: string,
-  volumeLang: string
+interface IVolume {
+  _id: string;
+  volumeName: string;
+  volumeLang: string;
 }
 
-interface IContainer {
-  wsurl: string;
-  containerId: string;
-  containerName: string;
-}
-
-export type { IApiResponse, IApiError, IFile, IFolder, IUser, IOldVolumes, IContainer }
+export type { IApiResponse, IApiError, IFile, IFolder, IUser, IVolume }
