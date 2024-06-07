@@ -36,4 +36,15 @@ interface IVolume {
   volumeLang: string;
 }
 
-export type { IApiResponse, IApiError, IFile, IFolder, IUser, IVolume }
+interface IFolderOptions {
+  changeFile: (fileId: string) => void;
+  saveCurFile: () => void;
+  createFile: (folderId: string) => void;
+  createFolder: (folderId: string) => void;
+  deleteFile: (fileId: string) => void;
+  deleteFolder: (folderId: string) => void;
+  renameFile: (fileId: string) => void;
+  renameFolder: (folderId: string) => void;
+}
+
+export type { IApiResponse, IApiError, IFile, IFolder, IUser, IVolume, IFolderOptions }

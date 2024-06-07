@@ -6,16 +6,18 @@ import {
 import { useState } from "react";
 import { IFolder, IFile } from "@/types";
 import { Button } from "@/components/ui/button";
+import { useFolderContext } from "./context";
 
 function Folders({ folder, activeFile }: { folder: IFolder, activeFile: string|undefined }) {
   const [expand, setExpand] = useState(true);
+  const fo = useFolderContext();
 
   return (
     <>
       <ContextMenu>
         <ContextMenuTrigger>
           <div
-            className="pl-2 cursor-pointer flex items-center hover:bg-slate-700"
+            className="pl-2 cursor-pointer flex text-white items-center hover:bg-slate-700"
             onClick={() => setExpand(!expand)}
             key={folder.id}
           >
@@ -26,28 +28,28 @@ function Folders({ folder, activeFile }: { folder: IFolder, activeFile: string|u
           <Button
             className="p-1 m-0 hover:bg-slate-400"
             variant="ghost"
-            onClick={() => {}}
+            onClick={() => {fo.createFile(folder.id)}}
           >
             New File
           </Button>
           <Button
             className="p-1 m-0 hover:bg-slate-400"
             variant="ghost"
-            onClick={() => {}}
+            onClick={() => {fo.createFolder(folder.id)}}
           >
             New Folder
           </Button>
           {folder.id !== "_NoDeleteAndRename_" && <><Button
             className="p-1 m-0 hover:bg-slate-400"
             variant="ghost"
-            onClick={() => {}}
+            onClick={() => {fo.renameFolder(folder.id)}}
           >
             Rename
           </Button>
           <Button
             className="p-1 m-0 hover:bg-slate-400"
             variant="ghost"
-            onClick={() => {}}
+            onClick={() => {fo.deleteFolder(folder.id)}}
           >
             Delete
           </Button></>}
@@ -62,9 +64,9 @@ function Folders({ folder, activeFile }: { folder: IFolder, activeFile: string|u
           <ContextMenu>
             <ContextMenuTrigger>
               <div
-                className={`ml-3 cursor-pointer max-w-fit flex items-center ${child.id == activeFile ? "bg-slate-700" : ""} hover:bg-slate-700`}
+                className={`ml-3 cursor-pointer text-white flex items-center ${child.id == activeFile ? "bg-slate-700" : ""} hover:bg-slate-700`}
                 onClick={() => {
-                  // changeFile(child.id);
+                  fo.changeFile(child.id)
                 }}
                 key={child.id}
               >
@@ -75,14 +77,14 @@ function Folders({ folder, activeFile }: { folder: IFolder, activeFile: string|u
           <Button
             className="p-1 m-0 hover:bg-slate-400"
             variant="ghost"
-            onClick={() => {}}
+            onClick={() => {fo.renameFile(child.id)}}
           >
             Rename
           </Button>
           <Button
             className="p-1 m-0 hover:bg-slate-400"
             variant="ghost"
-            onClick={() => {}}
+            onClick={() => {fo.deleteFile(child.id)}}
           >
             Delete
           </Button>
