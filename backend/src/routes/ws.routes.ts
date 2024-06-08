@@ -2,6 +2,7 @@ import internal from "stream";
 import { wssF, wssT } from "../app.js";
 import { IncomingMessage } from "http";
 import { terminalConnect } from "../controllers/terminal.controller.js";
+import { folderConnect } from "../controllers/folder.controller.js";
 
 function wsRoute(req: IncomingMessage, socket: internal.Duplex, head: Buffer) {
   if (!req.url) {
@@ -22,8 +23,7 @@ function wsRoute(req: IncomingMessage, socket: internal.Duplex, head: Buffer) {
     // "/folder/:id"
     wssF.handleUpgrade(req, socket, head, (ws) => {
       wssF.on('connection', () => {
-        console.log("Client Connected!! on F")
-        ws.on('error', console.error);
+        folderConnect(ws, pathname.split("/").pop()!)
       });
       wssF.emit('connection');
     });

@@ -7,6 +7,7 @@ interface IUserDocument{
 }
 
 interface IVolumeDocument {
+  _id: mongooes.Schema.Types.ObjectId;
   owner: mongoose.Schema.Types.ObjectId;
   volumeName: string;
   volumeLang: string;
@@ -19,6 +20,18 @@ interface IReqBody {
   password: string;
 }
 
+interface IFile {
+  id: string;
+  name: string;
+}
+
+interface IFolder {
+  id: string;
+  name: string;
+  childFiles: Array<IFile>;
+  childFolder: Array<IFolder>;
+}
+
 type workDir = "node" | "java" | "python" | "ccpp";
 
-export type { IUserDocument, IVolumeDocument, IReqBody, workDir }
+export type { IUserDocument, IVolumeDocument, IReqBody, IFile, IFolder, workDir }
