@@ -32,6 +32,12 @@ interface IFolder {
   childFolder: Array<IFolder>;
 }
 
+interface IWSResponse {
+  success: boolean;
+  message: string;
+  data?: any;
+}
+
 type workDir = "node" | "java" | "python" | "ccpp";
 
-export type { IUserDocument, IVolumeDocument, IReqBody, IFile, IFolder, workDir }
+export type { IUserDocument, IVolumeDocument, IReqBody, IFile, IFolder, workDir, IWSResponse }

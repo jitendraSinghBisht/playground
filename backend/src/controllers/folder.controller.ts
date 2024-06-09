@@ -1,11 +1,12 @@
 import fs from 'node:fs';
 import path from "node:path";
 import { WebSocket } from 'ws';
+import chokidar from 'chokidar';
 import { v4 as uuid } from "uuid";
 import { isValidObjectId } from 'mongoose';
 import { User } from '../models/user.model.js';
 import { Volume } from '../models/volume.model.js';
-import { IFile, IFolder, IUserDocument, IVolumeDocument } from '../types.js';
+import { IFile, IFolder, IUserDocument, IVolumeDocument, IWSResponse } from '../types.js';
 
 export async function folderConnect(ws: WebSocket, id: string) {
   console.log("Client Connected!! on F")
@@ -32,43 +33,77 @@ export async function folderConnect(ws: WebSocket, id: string) {
     return;
   }
 
-  ws.on("message", async (data) => {
-    let volume: IVolumeDocument | null = await Volume.findById(id);
-    if (!volume) {
-      ws.send(JSON.stringify({ success: false, message: "No volume found" }));
-      ws.close();
-      return;
+  const watch = chokidar.watch(`${basePath}/${user.username}/${volume.volumeName}`)
+  watch.on("ready", () => { console.log("Volume is being watched....") })
+  watch.on('all', async (event) => {
+    if (event in ["add", "addDir", "unlink", "unlinkDir"]) {
+      const res: IWSResponse = getRootFolder(user, volume, basePath);
+      if (res.success) volume.volumeStructure = JSON.stringify(res.data);
+      wsSend("updateRootFolder", res);
     }
+  })
+
+  function wsSend(task: string, res: IWSResponse) {
+    ws.send(JSON.stringify({
+      task,
+      ...res
+    }));
+  }
+
+  ws.on("message", async (data) => {
     const msg: { task: string, [key: string]: string } = JSON.parse(data.toString());
 
-    let res: { success: boolean; message: string; data?: any; };
+    let res: IWSResponse;
     switch (msg.task) {
       case "getRootFolder":
-        res = await getRootFolder(user, volume, basePath);
+        res = getRootFolder(user, volume, basePath);
+        res.success ?
+          volume.volumeStructure = JSON.stringify(res.data) :
+          wsSend(msg.task, res);
         break;
       case "saveFile":
-        res = await saveFile(user, volume, basePath, msg.fileId, msg.fileData)
+        res = saveFile(user, volume, basePath, msg.fileId, msg.fileData)
+        wsSend(msg.task, res);
         break;
       case "getFile":
-        res = await getFile(user, volume, basePath, msg.fileId)
+        res = getFile(user, volume, basePath, msg.fileId)
+        wsSend(msg.task, res);
         break;
       case "createFile":
-        res = await createFile(user, volume, basePath, msg.folderId, msg.fileName)
+        res = createFile(user, volume, basePath, msg.folderId, msg.fileName)
+        res.success ?
+          volume.volumeStructure = JSON.stringify(res.data) :
+          wsSend(msg.task, res);
         break;
       case "createFolder":
-        res = await createFolder(user, volume, basePath, msg.folderId, msg.folderName)
+        res = createFolder(user, volume, basePath, msg.folderId, msg.folderName)
+        res.success ?
+          volume.volumeStructure = JSON.stringify(res.data) :
+          wsSend(msg.task, res);
         break;
       case "renameFolder":
-        res = await renameFolder(user, volume, basePath, msg.folderId, msg.folderName)
+        res = renameFolder(user, volume, basePath, msg.folderId, msg.folderName)
+        res.success ?
+          volume.volumeStructure = JSON.stringify(res.data) :
+          wsSend(msg.task, res);
         break;
       case "renameFile":
-        res = await renameFile(user, volume, basePath, msg.fileId, msg.fileName)
+        res = renameFile(user, volume, basePath, msg.fileId, msg.fileName)
+        res.success ?
+          volume.volumeStructure = JSON.stringify(res.data) :
+          wsSend(msg.task, res);
         break;
       case "deleteFile":
-        res = await deleteFile(user, volume, basePath, msg.fileId)
+        res = deleteFile(user, volume, basePath, msg.fileId)
+        res.success ?
+          volume.volumeStructure = JSON.stringify(res.data) :
+          wsSend(msg.task, res);
         break;
       case "deleteFolder":
-        res = await deleteFolder(user, volume, basePath, msg.folderId)
+        res = deleteFolder(user, volume, basePath, msg.folderId)
+        res.success ?
+          volume.volumeStructure = JSON.stringify(res.data) :
+          wsSend(msg.task, res);
         break;
 
       default:
@@ -76,12 +111,9 @@ export async function folderConnect(ws: WebSocket, id: string) {
           success: false,
           message: "No valid option found"
         }
+        wsSend(msg.task, res);
         break;
     }
-    ws.send(JSON.stringify({
-      task: msg.task,
-      ...res
-    }));
   });
 
   ws.on("error", () => {
@@ -89,7 +121,16 @@ export async function folderConnect(ws: WebSocket, id: string) {
     ws.close();
   });
 
-  ws.on("close", () => console.log("client disconnected"))
+  ws.on("close", async () => {
+    try {
+      await Volume.findByIdAndUpdate(volume._id, {
+        volumeStructure: volume.volumeStructure
+      });
+      console.log("client disconnected");
+    } catch (error) {
+      console.log(error);
+    }
+  })
 }
 
 //functions........
@@ -162,14 +203,10 @@ function traverseForFolder(rootPath: string, fol: IFolder, folderId: string): st
   return undefined;
 }
 
-async function getRootFolder(user: IUserDocument, volume: IVolumeDocument, basePath: string) {
+function getRootFolder(user: IUserDocument, volume: IVolumeDocument, basePath: string) {
   try {
     let result: IFolder | undefined = volume.volumeStructure ? JSON.parse(volume.volumeStructure) : undefined
     result = folderRead(`${basePath}/${user.username}/${volume.volumeName}`, result)
-
-    await Volume.findByIdAndUpdate(volume._id, {
-      volumeStructure: JSON.stringify(result)
-    });
 
     return {
       success: true,
@@ -184,7 +221,7 @@ async function getRootFolder(user: IUserDocument, volume: IVolumeDocument, baseP
   }
 }
 
-async function saveFile(user: IUserDocument, volume: IVolumeDocument, basePath: string, fileId: string, fileData: string) {
+function saveFile(user: IUserDocument, volume: IVolumeDocument, basePath: string, fileId: string, fileData: string) {
   try {
     const obj: IFolder = JSON.parse(volume.volumeStructure)
 
@@ -210,7 +247,7 @@ async function saveFile(user: IUserDocument, volume: IVolumeDocument, basePath: 
   }
 }
 
-async function getFile(user: IUserDocument, volume: IVolumeDocument, basePath: string, fileId: string) {
+function getFile(user: IUserDocument, volume: IVolumeDocument, basePath: string, fileId: string) {
   try {
     const obj: IFolder = JSON.parse(volume.volumeStructure)
 
@@ -222,7 +259,7 @@ async function getFile(user: IUserDocument, volume: IVolumeDocument, basePath: s
       }
     }
 
-    const data = fs.readFileSync(filePath, 'utf8');
+    const fileData = fs.readFileSync(filePath, 'utf8');
 
     return {
       success: true,
@@ -230,7 +267,7 @@ async function getFile(user: IUserDocument, volume: IVolumeDocument, basePath: s
       data: {
         file: filePath.split("/").pop(),
         fileId,
-        data
+        fileData
       }
     }
   } catch (error: any) {
@@ -241,7 +278,7 @@ async function getFile(user: IUserDocument, volume: IVolumeDocument, basePath: s
   }
 }
 
-async function createFile(user: IUserDocument, volume: IVolumeDocument, basePath: string, folderId: string, fileName: string) {
+function createFile(user: IUserDocument, volume: IVolumeDocument, basePath: string, folderId: string, fileName: string) {
   try {
     const obj: IFolder = JSON.parse(volume.volumeStructure)
 
@@ -256,11 +293,6 @@ async function createFile(user: IUserDocument, volume: IVolumeDocument, basePath
     fs.writeFileSync(path.join(folderPath, fileName), "");
     folderRead(`${basePath}/${user.username}/${volume.volumeName}`, obj);
 
-    await Volume.findByIdAndUpdate(volume._id, {
-      volumeStructure: JSON.stringify(obj)
-    });
-
-
     return {
       success: true,
       message: "File created successfully",
@@ -274,7 +306,7 @@ async function createFile(user: IUserDocument, volume: IVolumeDocument, basePath
   }
 }
 
-async function createFolder(user: IUserDocument, volume: IVolumeDocument, basePath: string, folderId: string, folderName: string) {
+function createFolder(user: IUserDocument, volume: IVolumeDocument, basePath: string, folderId: string, folderName: string) {
   try {
     const obj: IFolder = JSON.parse(volume.volumeStructure)
 
@@ -289,11 +321,6 @@ async function createFolder(user: IUserDocument, volume: IVolumeDocument, basePa
     fs.mkdirSync(path.join(folderPath, folderName));
     folderRead(`${basePath}/${user.username}/${volume.volumeName}`, obj);
 
-    await Volume.findByIdAndUpdate(volume._id, {
-      volumeStructure: JSON.stringify(obj)
-    });
-
-
     return {
       success: true,
       message: "Folder created successfully",
@@ -307,7 +334,7 @@ async function createFolder(user: IUserDocument, volume: IVolumeDocument, basePa
   }
 }
 
-async function deleteFile(user: IUserDocument, volume: IVolumeDocument, basePath: string, fileId: string) {
+function deleteFile(user: IUserDocument, volume: IVolumeDocument, basePath: string, fileId: string) {
   try {
     const obj: IFolder = JSON.parse(volume.volumeStructure)
 
@@ -322,11 +349,6 @@ async function deleteFile(user: IUserDocument, volume: IVolumeDocument, basePath
     fs.unlinkSync(filePath);
     folderRead(`${basePath}/${user.username}/${volume.volumeName}`, obj);
 
-    await Volume.findByIdAndUpdate(volume._id, {
-      volumeStructure: JSON.stringify(obj)
-    });
-
-
     return {
       success: true,
       message: "File deleted successfully",
@@ -340,7 +362,7 @@ async function deleteFile(user: IUserDocument, volume: IVolumeDocument, basePath
   }
 }
 
-async function deleteFolder(user: IUserDocument, volume: IVolumeDocument, basePath: string, folderId: string) {
+function deleteFolder(user: IUserDocument, volume: IVolumeDocument, basePath: string, folderId: string) {
   try {
     const obj: IFolder = JSON.parse(volume.volumeStructure)
 
@@ -355,11 +377,6 @@ async function deleteFolder(user: IUserDocument, volume: IVolumeDocument, basePa
     fs.rmSync(folderPath, { recursive: true, force: true });
     folderRead(`${basePath}/${user.username}/${volume.volumeName}`, obj);
 
-    await Volume.findByIdAndUpdate(volume._id, {
-      volumeStructure: JSON.stringify(obj)
-    });
-
-
     return {
       success: true,
       message: "Folder deleted successfully",
@@ -373,7 +390,7 @@ async function deleteFolder(user: IUserDocument, volume: IVolumeDocument, basePa
   }
 }
 
-async function renameFile(user: IUserDocument, volume: IVolumeDocument, basePath: string, fileId: string, fileName: string) {
+function renameFile(user: IUserDocument, volume: IVolumeDocument, basePath: string, fileId: string, fileName: string) {
   try {
     const obj: IFolder = JSON.parse(volume.volumeStructure)
 
@@ -385,13 +402,8 @@ async function renameFile(user: IUserDocument, volume: IVolumeDocument, basePath
       }
     }
 
-    fs.renameSync(filePath,filePath.substring(0, filePath.lastIndexOf('/') + 1) + fileName);
+    fs.renameSync(filePath, filePath.substring(0, filePath.lastIndexOf('/') + 1) + fileName);
     folderRead(`${basePath}/${user.username}/${volume.volumeName}`, obj);
-
-    await Volume.findByIdAndUpdate(volume._id, {
-      volumeStructure: JSON.stringify(obj)
-    });
-
 
     return {
       success: true,
@@ -406,7 +418,7 @@ async function renameFile(user: IUserDocument, volume: IVolumeDocument, basePath
   }
 }
 
-async function renameFolder(user: IUserDocument, volume: IVolumeDocument, basePath: string, folderId: string, folderName: string) {
+function renameFolder(user: IUserDocument, volume: IVolumeDocument, basePath: string, folderId: string, folderName: string) {
   try {
     const obj: IFolder = JSON.parse(volume.volumeStructure)
 
@@ -418,13 +430,8 @@ async function renameFolder(user: IUserDocument, volume: IVolumeDocument, basePa
       }
     }
 
-    fs.renameSync(folderPath,folderPath.substring(0, folderPath.lastIndexOf('/') + 1) + folderName);
+    fs.renameSync(folderPath, folderPath.substring(0, folderPath.lastIndexOf('/') + 1) + folderName);
     folderRead(`${basePath}/${user.username}/${volume.volumeName}`, obj);
-
-    await Volume.findByIdAndUpdate(volume._id, {
-      volumeStructure: JSON.stringify(obj)
-    });
-
 
     return {
       success: true,
