@@ -5,11 +5,12 @@ import { fileData } from "@/store/slice/files.slice";
 import useFolder from "./useFolder";
 import { FolderContext } from "./context";
 
-function FolderView() {
+function FolderView({setSaveFile}:{setSaveFile: (val: ()=> void) => void}) {
 
   const rootFolder = useSelector(folderData)
   const curFile = useSelector(fileData)
   const folderOptions = useFolder()
+  // setSaveFile(folderOptions.saveCurFile)
 
   return (
     <div className="h-full w-full bg-gray-950" >

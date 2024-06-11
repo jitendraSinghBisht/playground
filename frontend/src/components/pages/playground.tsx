@@ -14,10 +14,8 @@ import { Button } from "@/components/ui/button";
 import { useDispatch, useSelector } from "react-redux";
 import { userData } from "@/store/slice/user.slice";
 import { useEffect, useState } from "react";
-// import FolderView from "@/folderview/folderview";
 import { IApiError, IApiResponse } from "@/types";
 import axios from "axios";
-import { folderData } from "@/store/slice/folder.slice";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -27,6 +25,7 @@ import Xterm from "../xterm/xterm";
 import Monaco from "../monaco/monaco";
 import Preview from "../preview/preview";
 import FolderView from "../folderview/folderview";
+import { fileData } from "@/store/slice/files.slice";
 
 export function Playground() {
   const dispatch = useDispatch();
@@ -35,30 +34,33 @@ export function Playground() {
   const [editorActive, setEditorActive] = useState(true);
   const [termActive, setTermActive] = useState(true);
   const [webActive, setWebActive] = useState(false);
+  const [run, setRun] = useState<()=>void>()
+  const [save, setSave] = useState<()=>void>()
   const user = useSelector(userData);
+  const file = useSelector(fileData);
 
-  // async function logout() {
-  //   try {
-  //     const response = await axios.post(`/user/log-out`, {
-  //       userId: user.userId,
-  //     });
-  //     const jres: IApiResponse | IApiError = await response.data;
-  //     if (!jres.success) {
-  //       alert("Unable to logout... \nTry again later....");
-  //       return;
-  //     }
-  //     dispatch({ type: "RESET" });
-  //     navigate("/login");
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // }
+  async function logout() {
+    try {
+      const response = await axios.post(`/user/log-out`, {
+        userId: user.userId,
+      });
+      const jres: IApiResponse | IApiError = await response.data;
+      if (!jres.success) {
+        alert("Unable to logout... \nTry again later....");
+        return;
+      }
+      dispatch({ type: "RESET" });
+      navigate("/login");
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
-  // useEffect(() => {
-  //   if (!user.loggedIn) {
-  //     navigate("/login");
-  //   }
-  // }, [user]);
+  if (!user.loggedIn) {
+    navigate("/login");
+  }
+  useEffect(() => {
+  }, [user]);
 
   return (
     <div className="h-screen w-full">
@@ -70,15 +72,26 @@ export function Playground() {
         <Button
           variant="destructive"
           className="bg-green-900 hover:bg-green-600 m-1"
+          onClick={()=>{ if(run) run(); }}
         >
           <Play size="18" /> &nbsp; RUN
+        </Button>
+        <div>
+        <Button
+          variant="outline"
+          className="bg-transparent hover:bg-gray-700 border-gray-700 hover:text-white m-1"
+          onClick={()=>{ if(save) save(); }}
+        >
+          <SaveAll size="18" /> &nbsp; SAVE
         </Button>
         <Button
           variant="outline"
           className="bg-transparent hover:bg-gray-700 border-gray-700 hover:text-white m-1"
+          onClick={logout}
         >
-          <SaveAll size="18" /> &nbsp; SAVE
+          <LogOut size="18" /> &nbsp; LOGOUT
         </Button>
+        </div>
       </header>
       <div className="h-[93vh] flex">
         <div className="h-full gap-5 border-r-2 border-gray-700 w-[4vw] flex flex-col">
@@ -124,7 +137,7 @@ export function Playground() {
                 minSize={10}
                 className={`${!fileActive && "w-0 hidden"}`}
               >
-                <FolderView />
+                <FolderView setSaveFile={(val)=>{setSave(val)}}/>
               </ResizablePanel>
               <ResizableHandle
                 className={`border-2 border-gray-700 ${
@@ -149,7 +162,8 @@ export function Playground() {
                         minSize={20}
                         className={`${!editorActive && "w-0 hidden"}`}
                       >
-                        <Monaco click={()=>{setEditorActive(prev=>!prev)}}/>
+                        {(file.curFileId == "") ? <div className="h-full w-full"></div> :
+                        <Monaco click={()=>{setEditorActive(prev=>!prev)}}/>}
                       </ResizablePanel>
                       <ResizableHandle
                         className={`border-2 border-gray-700 ${
@@ -160,7 +174,7 @@ export function Playground() {
                         minSize={15}
                         className={`${!termActive && "w-0 hidden"}`}
                       >
-                        <Xterm click={()=>{setTermActive(prev=>!prev)}}/>
+                        <Xterm click={()=>{setTermActive(prev=>!prev)}} setRunFile={(val)=>{setRun(val)}}/>
                       </ResizablePanel>
                     </ResizablePanelGroup>
                   </ResizablePanel>

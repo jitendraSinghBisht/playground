@@ -13,7 +13,7 @@ app.use(session({
   cookie: { secure: true, sameSite: "none", httpOnly: true }
 }));
 
-app.use(cors({credentials: true, origin: `${process.env.CORS_ORIGIN}`}));
+app.use(cors({credentials: true, origin: `${process.env.CORS_ORIGIN || "http://localhost:5173"}`}));
 app.use(express.json());
 app.use(cookieParser());
 

@@ -1,6 +1,5 @@
-import { fileData } from "@/store/slice/files.slice";
-import { folderData } from "@/store/slice/folder.slice";
-import { userData } from "@/store/slice/user.slice";
+import { fileData, updateFile } from "@/store/slice/files.slice";
+import { folderData, updateFolder } from "@/store/slice/folder.slice";
 import { volumeData } from "@/store/slice/volume.slice";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -8,24 +7,55 @@ import { useDispatch, useSelector } from "react-redux";
 function useFolder() {
   const file = useSelector(fileData);
   const rootFolder = useSelector(folderData);
-  const user = useSelector(userData);
   const volume = useSelector(volumeData);
   const dispatch = useDispatch();
   const wsUrl = `${import.meta.env.VITE_WS_URL}/folder/${volume._id}`;
-  const [ws, setWS] = useState<WebSocket>(new WebSocket(wsUrl))
+  const [ws, setWS] = useState<WebSocket>()
 
   useEffect(()=>{
-    if (ws.readyState == ws.CLOSED) {
+    if (!ws || ws.readyState == ws.CLOSED || ws.readyState == ws.CLOSING)
       setWS(new WebSocket(wsUrl))
-    }
-  },[ws])
+  }, [ws])
 
-  ws.onopen = ()=>{
-    const data = {
-      type: "getRootFolder"
+  useEffect(()=>{
+  if (ws && ws.readyState == ws.OPEN) {
+    ws.onopen = () => {
+      const data = {
+        task: "getRootFolder"
+      }
+      ws.send(JSON.stringify(data));
     }
-    ws.send(JSON.stringify(data));
+  
+    ws.onmessage = (ev: MessageEvent) => {
+      const data: { task: string; success: boolean; message: string; data?: any; } = JSON.parse(ev.data);
+  
+      if (!data.success) {
+        alert(data.message);
+        return;
+      }
+  
+      switch (data.task) {
+        case "updateRootFolder":
+          dispatch(updateFolder(data.data));
+          break;
+        case "saveFile":
+          alert(data.message);
+          break;
+        case "getFile":
+          dispatch(updateFile({
+            curFile: data.data.file,
+            curFileId: data.data.fileId,
+            curFileData: data.data.fileData
+          }));
+          break;
+  
+        default:
+          console.log("Unknow operation");
+          break;
+      }
+    }
   }
+  })
 
   function saveCurFile() {
     const data = {
@@ -33,18 +63,18 @@ function useFolder() {
       fileId: file.curFileId,
       fileData: file.curFileData
     }
-    ws.send(JSON.stringify(data));
+    if (ws && ws.readyState == ws.OPEN) ws.send(JSON.stringify(data));
   }
 
   function changeFile(fileId: string) {
-    if (file.curFileId) {
+    if (file.curFileId != "") {
       saveCurFile();
     }
     const data = {
       task: "getFile",
       fileId
     }
-    ws.send(JSON.stringify(data));
+    if (ws && ws.readyState == ws.OPEN) ws.send(JSON.stringify(data));
   }
 
   function createFile(folderId: string) {
@@ -53,12 +83,13 @@ function useFolder() {
       alert("File name is required....")
       return
     }
+    if (folderId === "_NoDeleteAndRename_") folderId = rootFolder.id;
     const data = {
       task: "createFile",
       folderId,
       fileName
     }
-    ws.send(JSON.stringify(data));
+    if (ws && ws.readyState == ws.OPEN) ws.send(JSON.stringify(data));
   }
 
   function createFolder(folderId: string) {
@@ -67,12 +98,13 @@ function useFolder() {
       alert("Folder name is required....")
       return
     }
+    if (folderId === "_NoDeleteAndRename_") folderId = rootFolder.id;
     const data = {
       task: "createFolder",
       folderId,
       folderName
     }
-    ws.send(JSON.stringify(data));
+    if (ws && ws.readyState == ws.OPEN) ws.send(JSON.stringify(data));
   }
 
   function renameFolder(folderId: string) {
@@ -86,7 +118,7 @@ function useFolder() {
       folderId,
       folderName
     }
-    ws.send(JSON.stringify(data));
+    if (ws && ws.readyState == ws.OPEN) ws.send(JSON.stringify(data));
   }
 
   function renameFile(fileId: string) {
@@ -100,7 +132,7 @@ function useFolder() {
       fileId,
       fileName
     }
-    ws.send(JSON.stringify(data));
+    if (ws && ws.readyState == ws.OPEN) ws.send(JSON.stringify(data));
   }
 
   function deleteFile(fileId: string) {
@@ -108,7 +140,7 @@ function useFolder() {
       task: "deleteFile",
       fileId
     }
-    ws.send(JSON.stringify(data));
+    if (ws && ws.readyState == ws.OPEN) ws.send(JSON.stringify(data));
   }
 
   function deleteFolder(folderId: string) {
@@ -116,7 +148,7 @@ function useFolder() {
       task: "deleteFolder",
       folderId
     }
-    ws.send(JSON.stringify(data));
+    if (ws && ws.readyState == ws.OPEN) ws.send(JSON.stringify(data));
   }
 
   return { changeFile, saveCurFile, createFile, createFolder, deleteFile, deleteFolder, renameFile, renameFolder }
