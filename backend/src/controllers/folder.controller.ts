@@ -36,7 +36,7 @@ export async function folderConnect(ws: WebSocket, id: string) {
   const watch = chokidar.watch(`${basePath}/${user.username}/${volume.volumeName}`)
   watch.on("ready", () => { console.log("Volume is being watched....") })
   watch.on('all', async (event) => {
-    if (event in ["add", "addDir", "unlink", "unlinkDir"]) {
+    if (["add", "addDir", "unlink", "unlinkDir"].includes(event)) {
       const res: IWSResponse = getRootFolder(user, volume, basePath);
       if (res.success) volume.volumeStructure = JSON.stringify(res.data);
       wsSend("updateRootFolder", res);

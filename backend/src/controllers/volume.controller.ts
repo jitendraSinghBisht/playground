@@ -21,6 +21,8 @@ const createVolume = asyncHandler(async (req: Request, res: Response) => {
       volumeName: name,
       volumeLang: lang,
     })
+  } else {
+    volumedb = volumedbs[0];
   }
   const volumeName = `${process.env.VOLUME_LOC}/${user.username}/${name}`
 
@@ -40,10 +42,10 @@ const createVolume = asyncHandler(async (req: Request, res: Response) => {
 const getOldVolumes = asyncHandler(async (req: Request, res: Response) => {
   const { user }: { user: IUserDocument } = req.body;
 
-  const oldVolumes = await Volume.find({owner: user._id}).select("-volumeStructure -owner -createdAt -updatedAt")
+  const oldVolumes = await Volume.find({ owner: user._id }).select("-volumeStructure -owner -createdAt -updatedAt")
 
   if (!oldVolumes.length) {
-    throw new ApiError(400,"No volumes found")
+    throw new ApiError(400, "No volumes found")
   }
 
   return res
