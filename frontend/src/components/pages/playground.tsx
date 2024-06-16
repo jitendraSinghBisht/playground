@@ -1,7 +1,6 @@
 import {
   Binary,
   LogOut,
-  Play, 
   SaveAll,
   FilesIcon,
   TerminalSquare,
@@ -26,6 +25,8 @@ import Monaco from "../monaco/monaco";
 import Preview from "../preview/preview";
 import FolderView from "../folderview/folderview";
 import { fileData } from "@/store/slice/files.slice";
+import useFolder from "../folderview/useFolder";
+import { FolderContext } from "../folderview/context";
 
 export function Playground() {
   const dispatch = useDispatch();
@@ -34,10 +35,9 @@ export function Playground() {
   const [editorActive, setEditorActive] = useState(true);
   const [termActive, setTermActive] = useState(true);
   const [webActive, setWebActive] = useState(false);
-  const [run, setRun] = useState<()=>void>()
-  const [save, setSave] = useState<()=>void>()
   const user = useSelector(userData);
   const file = useSelector(fileData);
+  const folderOptions = useFolder();
 
   async function logout() {
     try {
@@ -59,8 +59,7 @@ export function Playground() {
   if (!user.loggedIn) {
     navigate("/login");
   }
-  useEffect(() => {
-  }, [user]);
+  useEffect(() => {}, [user]);
 
   return (
     <div className="h-screen w-full">
@@ -69,28 +68,21 @@ export function Playground() {
           <Binary />
           <span className="text-2xl font-bold"> PLAYGROUND </span>
         </div>
-        <Button
-          variant="destructive"
-          className="bg-green-900 hover:bg-green-600 m-1"
-          onClick={()=>{ if(run) run(); }}
-        >
-          <Play size="18" /> &nbsp; RUN
-        </Button>
         <div>
-        <Button
-          variant="outline"
-          className="bg-transparent hover:bg-gray-700 border-gray-700 hover:text-white m-1"
-          onClick={()=>{ if(save) save(); }}
-        >
-          <SaveAll size="18" /> &nbsp; SAVE
-        </Button>
-        <Button
-          variant="outline"
-          className="bg-transparent hover:bg-gray-700 border-gray-700 hover:text-white m-1"
-          onClick={logout}
-        >
-          <LogOut size="18" /> &nbsp; LOGOUT
-        </Button>
+          <Button
+            variant="outline"
+            className="bg-transparent hover:bg-gray-700 border-gray-700 hover:text-white m-1"
+            onClick={folderOptions.saveCurFile}
+          >
+            <SaveAll size="18" /> &nbsp; SAVE
+          </Button>
+          <Button
+            variant="outline"
+            className="bg-transparent hover:bg-gray-700 border-gray-700 hover:text-white m-1"
+            onClick={logout}
+          >
+            <LogOut size="18" /> &nbsp; LOGOUT
+          </Button>
         </div>
       </header>
       <div className="h-[93vh] flex">
@@ -137,7 +129,9 @@ export function Playground() {
                 minSize={10}
                 className={`${!fileActive && "w-0 hidden"}`}
               >
-                <FolderView setSaveFile={(val)=>{setSave(val)}}/>
+                <FolderContext.Provider value={folderOptions}>
+                  <FolderView />
+                </FolderContext.Provider>
               </ResizablePanel>
               <ResizableHandle
                 className={`border-2 border-gray-700 ${
@@ -162,8 +156,15 @@ export function Playground() {
                         minSize={20}
                         className={`${!editorActive && "w-0 hidden"}`}
                       >
-                        {(file.curFileId == "") ? <div className="h-full w-full"></div> :
-                        <Monaco click={()=>{setEditorActive(prev=>!prev)}}/>}
+                        {file.curFileId == "" ? (
+                          <div className="h-full w-full"></div>
+                        ) : (
+                          <Monaco
+                            click={() => {
+                              setEditorActive((prev) => !prev);
+                            }}
+                          />
+                        )}
                       </ResizablePanel>
                       <ResizableHandle
                         className={`border-2 border-gray-700 ${
@@ -174,7 +175,11 @@ export function Playground() {
                         minSize={15}
                         className={`${!termActive && "w-0 hidden"}`}
                       >
-                        <Xterm click={()=>{setTermActive(prev=>!prev)}} setRunFile={(val)=>{setRun(val)}}/>
+                        <Xterm
+                          click={() => {
+                            setTermActive((prev) => !prev);
+                          }}
+                        />
                       </ResizablePanel>
                     </ResizablePanelGroup>
                   </ResizablePanel>
@@ -188,7 +193,11 @@ export function Playground() {
                     minSize={20}
                     className={`${!webActive && "hidden"}`}
                   >
-                    <Preview click={()=>{setWebActive(prev=>!prev)}}/>
+                    <Preview
+                      click={() => {
+                        setWebActive((prev) => !prev);
+                      }}
+                    />
                   </ResizablePanel>
                 </ResizablePanelGroup>
               </ResizablePanel>

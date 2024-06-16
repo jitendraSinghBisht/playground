@@ -151,7 +151,7 @@ export function Home() {
                 <Button
                   variant="link"
                   key={vols._id}
-                  className="w-fit"
+                  className="w-fit text-white"
                   onClick={() => oldDeploy(vols)}
                 >
                   {vols.volumeName}

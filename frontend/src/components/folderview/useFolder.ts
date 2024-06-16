@@ -13,12 +13,12 @@ function useFolder() {
   const [ws, setWS] = useState<WebSocket>()
 
   useEffect(()=>{
-    if (!ws || ws.readyState == ws.CLOSED || ws.readyState == ws.CLOSING)
+    if (!ws)
       setWS(new WebSocket(wsUrl))
   }, [ws])
 
   useEffect(()=>{
-  if (ws && ws.readyState == ws.OPEN) {
+    if (ws) {
     ws.onopen = () => {
       const data = {
         task: "getRootFolder"
@@ -38,14 +38,14 @@ function useFolder() {
         case "updateRootFolder":
           dispatch(updateFolder(data.data));
           break;
-        case "saveFile":
-          alert(data.message);
-          break;
+        // case "saveFile":
+        //   alert(data.message);
+        //   break;
         case "getFile":
           dispatch(updateFile({
             curFile: data.data.file,
             curFileId: data.data.fileId,
-            curFileData: data.data.fileData
+            curFileData: data.data.fileData || " "
           }));
           break;
   
@@ -55,7 +55,7 @@ function useFolder() {
       }
     }
   }
-  })
+  },[ws])
 
   function saveCurFile() {
     const data = {
