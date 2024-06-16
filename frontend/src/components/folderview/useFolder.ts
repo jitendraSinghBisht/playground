@@ -9,7 +9,7 @@ function useFolder() {
   const rootFolder = useSelector(folderData);
   const volume = useSelector(volumeData);
   const dispatch = useDispatch();
-  const wsUrl = `${import.meta.env.VITE_WS_URL}/api/folder/${volume._id}`;
+  const wsUrl = `${import.meta.env.VITE_WS_URL}/ws/folder/${volume._id}`;
   const [ws, setWS] = useState<WebSocket>()
 
   useEffect(()=>{

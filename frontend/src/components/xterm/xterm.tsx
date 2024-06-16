@@ -36,7 +36,7 @@ function Xterm(props: { click: () => void }) {
       }
       setWS(
         new WebSocket(
-          `${import.meta.env.VITE_WS_URL}/api/terminal/container/${cId}`
+          `${import.meta.env.VITE_WS_URL}/ws/terminal/container/${cId}`
         )
       );
       setContainerId(cId);
